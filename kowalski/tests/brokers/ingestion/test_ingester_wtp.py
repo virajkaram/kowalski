@@ -3,7 +3,7 @@ import os
 import pathlib
 import time
 
-from kowalski.alert_brokers.alert_broker_winter import watchdog
+from kowalski.alert_brokers.alert_broker_wtp import watchdog
 from kowalski.ingesters.ingester import KafkaStream
 from test_ingester_ztf import Program, Filter
 from kowalski.utils import Mongo, init_db_sync
@@ -36,7 +36,7 @@ class TestIngester:
         if not path_logs.exists():
             path_logs.mkdir(parents=True, exist_ok=True)
 
-        log("Checking the existing WINTER alert collection states")
+        log("Checking the existing WTP alert collection states")
         mongo = Mongo(
             host=config["database"]["host"],
             port=config["database"]["port"],
@@ -93,7 +93,7 @@ class TestIngester:
 
             program3 = Program(
                 group_name="FRITZ_TEST_WTP_UPDATE_ANNOTATIONS",
-                group_nickname="test3-wntr",
+                group_nickname="test3-wtp",
                 filter_name="Infraorange transients",
                 stream_ids=[5],
             )
@@ -103,13 +103,13 @@ class TestIngester:
                 filter_id=program3.filter_id,
                 update_annotations=True,
                 pipeline=[
-                    {"$match": {"objectId": "WNTR24auhaa"}}
+                    {"$match": {"objectId": "WTP24auhaa"}}
                 ],  # there is 1 alerts in the test set for this oid
             )
 
-        # create a test WNTR topic for the current UTC date
+        # create a test WTP topic for the current UTC date
         date = datetime.datetime.utcnow().strftime("%Y%m%d")
-        topic_name = f"winter_{date}_test"
+        topic_name = f"wtp_{date}_test"
         path_alerts = "wtp_alerts/test_alerts"
 
         with KafkaStream(
