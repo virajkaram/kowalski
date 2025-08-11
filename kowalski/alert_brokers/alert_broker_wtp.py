@@ -218,7 +218,7 @@ class WTPAlertConsumer(AlertConsumer, ABC):
 
 class WTPAlertWorker(AlertWorker, ABC):
     def __init__(self, **kwargs):
-        super().__init__(instrument="WNTR", **kwargs)
+        super().__init__(instrument="WTP", **kwargs)
 
         # talking to SkyPortal?
         if not config["misc"]["broker"]:
@@ -238,7 +238,7 @@ class WTPAlertWorker(AlertWorker, ABC):
                         self.wtp_stream_id = stream["id"]
         if self.wtp_stream_id is None:
             log("Failed to get WTP alert stream ids from SkyPortal")
-            raise ValueError("Failed to get WNTR alert stream ids from SkyPortal")
+            raise ValueError("Failed to get WTP alert stream ids from SkyPortal")
 
         # filter pipeline upstream: select current alert, ditch cutouts, and merge with aux data
         # including archival photometry and cross-matches:
@@ -496,7 +496,7 @@ def topic_listener(
     test: bool = False,
 ):
     """
-        Listen to a Kafka topic with WNTR alerts
+        Listen to a Kafka topic with WTP alerts
     :param topic:
     :param bootstrap_servers:
     :param offset_reset:
@@ -578,7 +578,7 @@ def watchdog(obs_dates: Union[str, list, None] = None, test: bool = False):
     while True:
         try:
             if obs_dates is None:
-                # for WNTR, the date that the data is sent to is the date of observation in local time
+                # for WTP, the date that the data is sent to is the date of observation in local time
                 # not UTC, which is essentially UTC - 1 day
                 datestrs = [
                     (datetime.utcnow() - timedelta(days=timediff)).strftime("%Y%m%d")
@@ -670,7 +670,7 @@ def watchdog(obs_dates: Union[str, list, None] = None, test: bool = False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Kowalski's WNTR Alert Broker")
+    parser = argparse.ArgumentParser(description="Kowalski's WTP Alert Broker")
     parser.add_argument(
         "--obsdates",
         default=None,
