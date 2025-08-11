@@ -115,7 +115,7 @@ class WTPAlertConsumer(AlertConsumer, ABC):
 
             log(f"wtp: {topic} {object_id} {candid} {worker.address}")
 
-            alert["fp_hists"] = alert.pop("fp_record")
+            alert["fp_hists"] = alert.pop("fp_records")
             # candid not in db, ingest decoded avro packet into db
             with timer(f"Mongification of {object_id} {candid}"):
                 alert, prv_candidates, fp_hists = alert_worker.alert_mongify(alert)
