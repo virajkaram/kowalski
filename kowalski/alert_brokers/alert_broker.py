@@ -774,6 +774,11 @@ class AlertWorker:
             # the filters are just the fid values
             # TODO: add the actual filter names
             df_light_curve["filter"] = df_light_curve["fid"].apply(lambda x: str(x))
+        elif self.instrument == "WTP":
+            wise_filters = {1: "f356w", 2: "f444w"}
+            df_light_curve["filter"] = df_light_curve["bandid"].apply(
+                lambda x: wise_filters[x]
+            )
 
         df_light_curve["mjd"] = df_light_curve["jd"] - 2400000.5
 
