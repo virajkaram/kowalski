@@ -561,7 +561,7 @@ class AlertWorker:
         )
 
     @staticmethod
-    def alert_mongify(alert: Mapping):
+    def alert_mongify(alert: Mapping, date_key="jd"):
         """
         Prepare a raw alert for ingestion into MongoDB:
           - add a placeholder for ML-based classifications
@@ -570,6 +570,7 @@ class AlertWorker:
           - extract the fp_hists section (if it exists)
 
         :param alert:
+        :param date_key: the key in the alert that contains the date (default is 'jd')
         :return:
         """
 
@@ -618,7 +619,7 @@ class AlertWorker:
             fp_hists = []
         else:
             # sort by jd
-            fp_hists = sorted(fp_hists, key=lambda k: k["jd"])
+            fp_hists = sorted(fp_hists, key=lambda k: k[date_key])
 
         return doc, prv_candidates, fp_hists
 

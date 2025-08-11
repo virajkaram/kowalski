@@ -118,7 +118,8 @@ class WTPAlertConsumer(AlertConsumer, ABC):
             alert["fp_hists"] = alert.pop("fp_records")
             # candid not in db, ingest decoded avro packet into db
             with timer(f"Mongification of {object_id} {candid}"):
-                alert, prv_candidates, fp_hists = alert_worker.alert_mongify(alert)
+                alert, prv_candidates, fp_hists = alert_worker.alert_mongify(alert,
+                                                                             date_key="mjd")
 
             # future: add ML model filtering here
 
