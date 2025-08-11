@@ -48,40 +48,6 @@ class WTPAlertConsumer(AlertConsumer, ABC):
         super().__init__(topic, dask_client, **kwargs)
 
 
-    def format_fp_hists(self, alert, fp_hists):
-        if len(fp_hists) == 0:
-            return []
-        # sort by jd
-        fp_hists = sorted(fp_hists, key=lambda x: x["jd"])
-
-        # deduplicate by jd. We noticed in production that sometimes there are
-        # multiple fp_hist entries with the same jd, which is not supposed to happen
-        # and can affect our concurrency avoidance logic in update_fp_hists and take more space
-        fp_hists = [
-            fp_hist
-            for i, fp_hist in enumerate(fp_hists)
-            if i == 0 or fp_hist["mjd"] != fp_hists[i - 1]["jd"]
-        ]
-
-        # add the "alert_mag" field to the new fp_hist
-        # as well as alert_ra, alert_dec
-        for i, fp in enumerate(fp_hists):
-            snr = fp.get("forcediffimflux", np.nan) / fp.get("forcediffimfluxunc", np.nan)
-            fp_hists[i] = {
-                **fp,
-                "mag": fp.get("forcediffmagpsf", np.nan),
-                "magerr": fp.get("forcediffsigmapsf", np.nan),
-                "snr": snr,
-                "limmag3sig": fp.get("diffmaglim", np.nan) - 2.5*np.log10(3.0 / 5.0),
-                "limmag5sig": fp.get("diffmaglim", np.nan),
-                "alert_mag": alert["candidate"]["magpsf"],
-                "alert_ra": alert["candidate"]["ra"],
-                "alert_dec": alert["candidate"]["dec"],
-            }
-
-        return fp_hists
-
-
     @staticmethod
     def process_alerts(avro_msg: bytes, topic: str):
         """Alert brokering task run by dask.distributed workers
@@ -295,6 +261,41 @@ class WTPAlertWorker(AlertWorker, ABC):
         log("Loaded user-defined filters:")
         log(self.filter_templates)
 
+
+    def format_fp_hists(self, alert, fp_hists):
+        if len(fp_hists) == 0:
+            return []
+        # sort by jd
+        fp_hists = sorted(fp_hists, key=lambda x: x["jd"])
+
+        # deduplicate by jd. We noticed in production that sometimes there are
+        # multiple fp_hist entries with the same jd, which is not supposed to happen
+        # and can affect our concurrency avoidance logic in update_fp_hists and take more space
+        fp_hists = [
+            fp_hist
+            for i, fp_hist in enumerate(fp_hists)
+            if i == 0 or fp_hist["mjd"] != fp_hists[i - 1]["jd"]
+        ]
+
+        # add the "alert_mag" field to the new fp_hist
+        # as well as alert_ra, alert_dec
+        for i, fp in enumerate(fp_hists):
+            snr = fp.get("forcediffimflux", np.nan) / fp.get("forcediffimfluxunc", np.nan)
+            fp_hists[i] = {
+                **fp,
+                "mag": fp.get("forcediffmagpsf", np.nan),
+                "magerr": fp.get("forcediffsigmapsf", np.nan),
+                "snr": snr,
+                "limmag3sig": fp.get("diffmaglim", np.nan) - 2.5*np.log10(3.0 / 5.0),
+                "limmag5sig": fp.get("diffmaglim", np.nan),
+                "alert_mag": alert["candidate"]["magpsf"],
+                "alert_ra": alert["candidate"]["ra"],
+                "alert_dec": alert["candidate"]["dec"],
+            }
+
+        return fp_hists
+
+    
     def get_active_filters(self):
         """Fetch user-defined filters from own db marked as active."""
         return list(
