@@ -295,7 +295,7 @@ class WTPAlertWorker(AlertWorker, ABC):
 
         return fp_hists
 
-    
+
     def get_active_filters(self):
         """Fetch user-defined filters from own db marked as active."""
         return list(

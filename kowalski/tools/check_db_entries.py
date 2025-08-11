@@ -25,7 +25,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.coll == "all":
-        surveys = ["ztf", "pgir", "wntr"]
+        surveys = ["ztf", "pgir", "wntr", "wtp"]
     else:
         surveys = [args.coll]
 
