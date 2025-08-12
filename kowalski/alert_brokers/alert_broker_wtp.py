@@ -337,7 +337,7 @@ class WTPAlertWorker(AlertWorker, ABC):
         if len(fp_hists) == 0:
             return []
         # sort by jd
-        fp_hists = sorted(fp_hists, key=lambda x: x["jd"])
+        fp_hists = sorted(fp_hists, key=lambda x: x["mjd"])
 
         # deduplicate by jd. We noticed in production that sometimes there are
         # multiple fp_hist entries with the same jd, which is not supposed to happen
@@ -345,7 +345,7 @@ class WTPAlertWorker(AlertWorker, ABC):
         fp_hists = [
             fp_hist
             for i, fp_hist in enumerate(fp_hists)
-            if i == 0 or fp_hist["mjd"] != fp_hists[i - 1]["jd"]
+            if i == 0 or fp_hist["mjd"] != fp_hists[i - 1]["mjd"]
         ]
 
         # add the "alert_mag" field to the new fp_hist
