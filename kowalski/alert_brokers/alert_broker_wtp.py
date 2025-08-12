@@ -262,6 +262,77 @@ class WTPAlertWorker(AlertWorker, ABC):
         log(self.filter_templates)
 
 
+    def alert_filter__xmatch_ztf_alerts(
+        self, alert: Mapping, ztf_stream: str = "ZTF_alerts"
+    ) -> dict:
+        """
+        Run cross-match with ZTF alerts
+        Only searches for the most recent entry to keep it efficient
+
+        :param alert:
+        :param ztf_stream: Name of ZTF alert stream catalog
+        :return:
+        """
+
+        xmatches = dict()
+
+        # cone search radius in arcsec:
+        cone_search_radius_ztf = 6.0
+        # convert arcsec to rad:
+        PI = 3.141592653589793
+        cone_search_radius_ztf *= PI / (180.0 * 3600)
+
+        try:
+            ra = float(alert["candidate"]["ra"])
+            dec = float(alert["candidate"]["dec"])
+
+            # geojson-friendly ra:
+            ra_geojson = ra - 180.0
+            dec_geojson = dec
+
+            # restrict to public data only
+            catalog_filter = {"candidate.programid": 1}
+            catalog_sort = [("candidate.jd", -1)]
+            catalog_projection = {
+                "objectId": 1,
+                "candid": 1,
+                "candidate.jd": 1,
+                "candidate.magpsf": 1,
+                "candidate.sigmapsf": 1,
+                "candidate.fid": 1,
+                "candidate.drb": 1,
+                "coordinates.radec_str": 1,
+            }
+
+            # do search of everything that is within the cross-match radius
+            object_position_query = dict()
+            object_position_query["coordinates.radec_geojson"] = {
+                "$geoWithin": {
+                    "$centerSphere": [
+                        [ra_geojson, dec_geojson],
+                        cone_search_radius_ztf,
+                    ]
+                }
+            }
+            # Just find the most recent alert within the crossmatch radius, if any
+            latest_alert = list(
+                self.mongo.db[ztf_stream].find(
+                    {**object_position_query, **catalog_filter},
+                    projection={**catalog_projection},
+                    sort=catalog_sort,
+                    limit=1,
+                )
+            )
+
+            # Check if any result was found (latest_alert is not null)
+            xmatches[ztf_stream] = latest_alert if latest_alert else []
+
+        except Exception as e:
+            log(str(e))
+
+        return xmatches
+
+
     def format_fp_hists(self, alert, fp_hists):
         if len(fp_hists) == 0:
             return []
