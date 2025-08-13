@@ -420,7 +420,7 @@ def process_file(argument_list: Sequence):
         return matches
 
 
-    def format_fp_hists(self, alert, fp_hists):
+    def format_fp_hists(alert, fp_hists):
         if len(fp_hists) == 0:
             return []
         # sort by jd
