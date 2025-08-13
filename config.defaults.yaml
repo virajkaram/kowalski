@@ -626,6 +626,18 @@ kowalski:
           }
 
     xmatch:
+      WTP:
+        PGIR:
+          2MASS_PSC:
+            cone_search_radius: 8
+            cone_search_unit: "arcsec"
+            filter: { }
+            projection:
+              _id: 1
+              coordinates.radec_str: 1
+              j_m: 1
+              h_m: 1
+              k_m: 1
       ZTF:
         2MASS_PSC:
           cone_search_radius: 2
