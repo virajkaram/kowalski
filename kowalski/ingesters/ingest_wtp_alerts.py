@@ -454,7 +454,7 @@ def process_file(argument_list: Sequence):
         return fp_hists
 
 
-    def process_alert(alert: Mapping, topic: str):
+    def process_alert(alert: Mapping, topic: str, cross_match_config: dict):
         """Alert brokering task run by dask.distributed workers
 
         :param avro_msg: avro message from Kafka stream
@@ -627,7 +627,7 @@ def process_file(argument_list: Sequence):
 
         # the topic should be in the file_name:
         # its either ztf_public or ztf_partnership
-        topic = "ztf_public" if "public" in file_name else "ztf_partnership"
+        topic = "wtp_all"
 
         if not os.path.exists(dir_name):
             log(f"Unpacking {file_name}...")
