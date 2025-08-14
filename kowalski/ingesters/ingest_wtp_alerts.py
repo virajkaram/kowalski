@@ -118,7 +118,7 @@ def alert_mongify(alert: Mapping, date_key: str = "mjd") -> Mapping:
     if fp_hists is None:
         fp_hists = []
     else:
-        # sort by jd
+        # sort by date
         fp_hists = sorted(fp_hists, key=lambda k: k[date_key])
 
     return doc, prv_candidates, fp_hists
@@ -423,7 +423,7 @@ def process_file(argument_list: Sequence):
     def format_fp_hists(alert, fp_hists):
         if len(fp_hists) == 0:
             return []
-        # sort by jd
+        # sort by mjd
         fp_hists = sorted(fp_hists, key=lambda x: x["mjd"])
 
         # deduplicate by jd. We noticed in production that sometimes there are
@@ -483,7 +483,7 @@ def process_file(argument_list: Sequence):
                 {
                     "$project": {
                         "fp_hist": {
-                            "jd": "$fp_hist.jd",
+                            "mjd": "$fp_hist.mjd",
                             "alert_mag": "$fp_hist.alert_mag",
                             "alert_ra": "$fp_hist.alert_ra",
                             "alert_dec": "$fp_hist.alert_dec",
@@ -510,7 +510,7 @@ def process_file(argument_list: Sequence):
                 },
                 # 2. unwind the resulting array to get one document per fp_hist
                 {"$unwind": "$all_fp_hists"},
-                # 3. group by jd and keep the one with the highest alert_mag for each jd
+                # 3. group by mjd and keep the one with the highest alert_mag for each mjd
                 {
                     "$set": {
                         "all_fp_hists.alert_mag": {
@@ -527,22 +527,22 @@ def process_file(argument_list: Sequence):
                         }
                     }
                 },
-                # 4. sort by jd and alert_mag
+                # 4. sort by mjd and alert_mag
                 {
                     "$sort": {
-                        "all_fp_hists.jd": 1,
+                        "all_fp_hists.mjd": 1,
                         "all_fp_hists.alert_mag": 1,
                     }
                 },
-                # 5. group all the deduplicated fp_hists back into an array, keeping the first one (the brightest at each jd)
+                # 5. group all the deduplicated fp_hists back into an array, keeping the first one (the brightest at each mjd)
                 {
                     "$group": {
-                        "_id": "$all_fp_hists.jd",
+                        "_id": "$all_fp_hists.mjd",
                         "fp_hist": {"$first": "$$ROOT.all_fp_hists"},
                     }
                 },
-                # 6. sort by jd again
-                {"$sort": {"fp_hist.jd": 1}},
+                # 6. sort by mjd again
+                {"$sort": {"fp_hist.mjd": 1}},
                 # 7. group all the fp_hists documents back into a single array
                 {"$group": {"_id": None, "fp_hists": {"$push": "$fp_hist"}}},
                 # 8. project only the new fp_hists array
@@ -609,7 +609,7 @@ def process_file(argument_list: Sequence):
                     },
                     {"fp_hists": 1},
                 )
-                .sort([("jd", 1)])
+                .sort([("mjd", 1)])
             )
             if len(new_fp_hists) > 0:
                 new_fp_hists = new_fp_hists[0]["fp_hists"]
