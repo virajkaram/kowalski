@@ -48,8 +48,8 @@ if __name__ == "__main__":
                 f"alerts_{srv}_aux"
             ]
 
-            mongo.db[collection_alerts].remove({})
-            mongo.db[collection_alerts_aux].remove({})
+            mongo.db[collection_alerts].delete_many({})
+            mongo.db[collection_alerts_aux].delete_many({})
 
     if args.find:
         for srv in surveys:
