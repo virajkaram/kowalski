@@ -485,12 +485,15 @@ def process_file(argument_list: Sequence):
                 .aggregate(last_fp_hist_pipeline, allowDiskUse=True)
                 .next()
             )
-            if last_fp_hists is None:
-                return
-            last_alert_mag = last_fp_hists["fp_hists"][-1].get("alert_mag")
-            current_alert_mag = alert["candidate"].get("magpsf")
 
-            if current_alert_mag < last_alert_mag:
+            if len(last_fp_hists["fp_hists"]) == 0:
+                replace_entry = True
+            else:
+                last_alert_mag = last_fp_hists["fp_hists"][-1].get("alert_mag")
+                current_alert_mag = alert["candidate"].get("magpsf")
+                replace_entry = (current_alert_mag < last_alert_mag)
+
+            if replace_entry:
                 # replace the fp_hists entry
                 mongo.db[collection_alerts_aux].update_one(
                     {
@@ -629,8 +632,6 @@ def process_file(argument_list: Sequence):
             #     new_fp_hists = new_fp_hists[0]["fp_hists"]
             # else:
             #     new_fp_hists = []
-
-            return new_fp_hists
 
 
     def process_alert(alert: Mapping, topic: str, cross_match_config: dict):
