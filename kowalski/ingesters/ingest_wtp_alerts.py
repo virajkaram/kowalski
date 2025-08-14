@@ -472,8 +472,8 @@ def process_file(argument_list: Sequence):
         candid = alert["candid"]
         object_id = alert["objectId"]
         if (
-                retry(mongo.db[collection_alerts_aux].count_documents)(
-                    {"_id": object_id}, limit=1
+                retry(mongo.db[collection_alerts].count_documents)(
+                    {"candid": candid}, limit=1
                 )
                 == 1
         ):
