@@ -474,22 +474,33 @@ def process_file(argument_list: Sequence):
                 # 2. only keep the last fp_hists entry and call it fp_hist
                 {
                     "$project": {
-                        "fp_hists": 1,
+                        "fp_hist": {"$arrayElemAt": ["$fp_hists", -1]},
+                    }
+                },
+                # 3. project only the jd and alert_mag, alert_ra, alert_dec fields in the fp_hists, as well as the n_fp_hists
+                {
+                    "$project": {
+                        "fp_hist": {
+                            "jd": "$fp_hist.jd",
+                            "alert_mag": "$fp_hist.alert_mag",
+                            "alert_ra": "$fp_hist.alert_ra",
+                            "alert_dec": "$fp_hist.alert_dec",
+                        },
                     }
                 },
             ]
 
             # get the very last fp_hists entry from the DB
-            last_fp_hists = (
+            last_fp_hist = (
                 mongo.db[collection_alerts_aux]
                 .aggregate(last_fp_hist_pipeline, allowDiskUse=True)
                 .next()
             )
 
-            if len(last_fp_hists["fp_hists"]) == 0:
+            if len(last_fp_hist["fp_hist"]) is None:
                 replace_entry = True
             else:
-                last_alert_mag = last_fp_hists["fp_hists"][-1].get("alert_mag")
+                last_alert_mag = last_fp_hist["fp_hist"].get("alert_mag")
                 current_alert_mag = alert["candidate"].get("magpsf")
                 replace_entry = (current_alert_mag < last_alert_mag)
 
@@ -508,7 +519,7 @@ def process_file(argument_list: Sequence):
                 return formatted_fp_hists
 
             else:
-                return last_fp_hists["fp_hists"]
+                return last_fp_hist["fp_hists"]
 
             # # pipeline that updates the fp_hists array if necessary
             # update_pipeline = [
