@@ -519,7 +519,7 @@ def process_file(argument_list: Sequence):
                 return formatted_fp_hists
 
             else:
-                return last_fp_hist["fp_hists"]
+                return {}
 
             # # pipeline that updates the fp_hists array if necessary
             # update_pipeline = [
