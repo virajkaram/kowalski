@@ -852,6 +852,8 @@ def process_file(argument_list: Sequence):
                         del msg_decoded
                 except Exception as e:
                     log(f"Failed to process alert {avro_file}: {str(e)}")
+                    with open("failed_alerts.log", "a") as f:
+                        f.write(f"{avro_file}\n")
                     continue
 
             if rm_file:
@@ -876,7 +878,7 @@ def run(
     mindate: str = None,
     maxdate: str = None,
     num_proc: int = multiprocessing.cpu_count(),
-    rm: bool = False,
+    rm: bool = True,
 ):
     """Preprocess and Ingest ZTF alerts into Kowalski's aux table
 
