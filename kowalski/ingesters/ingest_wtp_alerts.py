@@ -674,7 +674,7 @@ def process_file(argument_list: Sequence):
 
         alert["fp_hists"] = alert.pop("fp_records")
         # candid not in db, ingest decoded avro packet into db
-        with timer(f"Mongification of {object_id} {candid}"):
+        with timer(f"Mongification of {object_id} {candid}", verbose>1):
             alert, prv_candidates, fp_hists = alert_mongify(alert, date_key="mjd")
 
         # future: add ML model filtering here
@@ -832,7 +832,7 @@ def process_file(argument_list: Sequence):
         nb_alerts = len(avro_files)
         for i, avro_file in enumerate(avro_files):
             # ingest the avro file:
-            with timer(f"Processing alert {i + 1}/{nb_alerts}"):
+            with timer(f"Processing alert {i + 1}/{nb_alerts}", verbose>1):
                 try:
                     msg_decoded = decode_message(avro_file)
                     for record in msg_decoded:
@@ -847,6 +847,9 @@ def process_file(argument_list: Sequence):
                                 topic=topic,
                                 cross_match_config=cross_match_config,
                             )
+                        else:
+                            log(f"Alert {record['objectId']} {record['candid']} "
+                                f"already processed, skipping")
 
                         # clean up after thyself
                         del msg_decoded
@@ -864,6 +867,9 @@ def process_file(argument_list: Sequence):
         log(e)
         return
 
+    # Write filename to processed files
+    with open("processed_wtp_alert_files.txt", "a") as f:
+        f.write(f"{file_name}\n")
     try:
         if rm_file:
             # os.remove(file_name)
@@ -893,7 +899,13 @@ def run(
     # make sure the path is an absolute path
     path = os.path.abspath(path)
 
-    files = [str(f) for f in pathlib.Path(path).glob("*.zip")]
+    # read a list of files that have already been processed
+    processed_files = np.loadtxt(
+        "processed_wtp_alert_files.txt", dtype=str
+    ).tolist()
+    files = [str(f) for f in pathlib.Path(path).glob("*.zip")
+             if str(f) not in processed_files
+             ]
 
     # sort the files by date, if provided
     if mindate is not None:
@@ -917,11 +929,16 @@ def run(
             <= maxdate
         ]
 
-    input_list = [(f, rm) for f in files]
+    # Submit files in chunks of 100
+    for i in tqdm(range(0, len(files), 100)):
+        chunk = files[i:i+100]
+        log(f"Processing chunk {i//100 + 1} with {len(chunk)} files...")
 
-    with multiprocessing.Pool(processes=num_proc) as pool:
-        for _ in tqdm(pool.imap(process_file, input_list), total=len(files)):
-            pass
+        input_list = [(f, rm) for f in chunk]
+
+        with multiprocessing.Pool(processes=num_proc) as pool:
+            for _ in tqdm(pool.imap(process_file, input_list), total=len(files)):
+                pass
 
 
 if __name__ == "__main__":
