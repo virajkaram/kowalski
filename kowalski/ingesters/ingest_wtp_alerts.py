@@ -866,7 +866,7 @@ def process_file(argument_list: Sequence):
 
     try:
         if rm_file:
-            os.remove(file_name)
+            # os.remove(file_name)
             # also remove the directory with the contents
             os.system(f"rm -rf {dir_name}")
     finally:
@@ -878,7 +878,7 @@ def run(
     mindate: str = None,
     maxdate: str = None,
     num_proc: int = multiprocessing.cpu_count(),
-    rm: bool = True,
+    rm: bool = False,
 ):
     """Preprocess and Ingest ZTF alerts into Kowalski's aux table
 
