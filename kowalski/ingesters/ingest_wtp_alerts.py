@@ -502,7 +502,10 @@ def process_file(argument_list: Sequence):
             else:
                 last_alert_mag = last_fp_hist["fp_hist"].get("alert_mag")
                 current_alert_mag = alert["candidate"].get("magpsf")
-                replace_entry = (current_alert_mag < last_alert_mag)
+                if last_alert_mag is None:
+                    replace_entry = True
+                else:
+                    replace_entry = (current_alert_mag < last_alert_mag)
 
             if replace_entry:
                 # replace the fp_hists entry
@@ -832,7 +835,7 @@ def process_file(argument_list: Sequence):
         nb_alerts = len(avro_files)
         for i, avro_file in enumerate(avro_files):
             # ingest the avro file:
-            with timer(f"Processing alert {i + 1}/{nb_alerts}", verbose>1):
+            with timer(f"Processing alert {i + 1}/{nb_alerts}"):
                 try:
                     msg_decoded = decode_message(avro_file)
                     for record in msg_decoded:
